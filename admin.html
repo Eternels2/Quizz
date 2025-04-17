@@ -1,37 +1,94 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard Quiz</title>
+  <meta charset="UTF-8" />
+  <title>Dashboard Admin - Réponses Quiz</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-    h1 { margin-bottom: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      background: white;
+      border-collapse: collapse;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #3498db;
+      color: white;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
   </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsWXy6Gidrx4DMh_5RpbJH1qF4O9n4WUo",
+      authDomain: "quizz-3471d.firebaseapp.com",
+      projectId: "quizz-3471d",
+      storageBucket: "quizz-3471d.firebasestorage.app",
+      messagingSenderId: "886255828160",
+      appId: "1:886255828160:web:0d73d5182f9909e14a8125",
+      measurementId: "G-SWDFZG3J86"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadAnswers() {
+      const tableBody = document.getElementById("tbody");
+      const q = query(collection(db, "quiz_answers"), orderBy("date", "desc"));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const date = new Date(data.date?.toDate ? data.date.toDate() : data.date).toLocaleString();
+
+        const listItems = Object.entries(data.answers).map(([key, value]) =>
+          `<li><strong>${key} :</strong> ${value}</li>`
+        ).join("");
+
+        tableBody.innerHTML += `
+          <tr>
+            <td>${date}</td>
+            <td><ul>${listItems}</ul></td>
+          </tr>
+        `;
+      });
+    }
+
+    window.onload = loadAnswers;
+  </script>
 </head>
 <body>
-  <h1>Réponses des utilisateurs</h1>
-  <table id="answersTable">
+  <h1>Réponses des Utilisateurs</h1>
+  <table>
     <thead>
-      <tr><th>Date</th><th>Réponses</th></tr>
+      <tr>
+        <th>Date</th>
+        <th>Réponses</th>
+      </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="tbody">
+      <!-- Les réponses apparaîtront ici -->
+    </tbody>
   </table>
-
-  <script>
-    fetch('http://localhost:3000/api/responses')
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.querySelector('#answersTable tbody');
-        data.forEach(entry => {
-          const tr = document.createElement('tr');
-          const date = new Date(entry.date).toLocaleString();
-          const answers = Object.values(entry.answers).map(a => `<li>${a}</li>`).join('');
-          tr.innerHTML = `<td>${date}</td><td><ul>${answers}</ul></td>`;
-          tbody.appendChild(tr);
-        });
-      });
-  </script>
 </body>
 </html>

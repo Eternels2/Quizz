@@ -37,34 +37,86 @@
     button:hover {
       background-color: #2980b9;
     }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+    }
   </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsWXy6Gidrx4DMh_5RpbJH1qF4O9n4WUo",
+      authDomain: "quizz-3471d.firebaseapp.com",
+      projectId: "quizz-3471d",
+      storageBucket: "quizz-3471d.firebasestorage.app",
+      messagingSenderId: "886255828160",
+      appId: "1:886255828160:web:0d73d5182f9909e14a8125",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.submitQuiz = async function() {
+      const form = document.getElementById('quizForm');
+      const formData = new FormData(form);
+      const answers = {};
+
+      // Récupérer les réponses du formulaire
+      formData.forEach((value, key) => {
+        answers[key] = value;
+      });
+
+      try {
+        // Enregistrer les réponses dans Firestore
+        await addDoc(collection(db, "quiz_answers"), { answers, date: new Date() });
+
+        // Afficher un message de succès
+        document.getElementById('result').innerText = "Merci pour tes réponses !";
+        document.getElementById('result').style.color = "green";  // Changer la couleur du texte pour indiquer le succès
+
+        // Réinitialiser le formulaire
+        form.reset();
+      } catch (e) {
+        console.error("Erreur lors de l'enregistrement : ", e);
+
+        // Afficher un message d'erreur
+        document.getElementById('result').innerText = "Une erreur est survenue.";
+        document.getElementById('result').style.color = "red";  // Afficher en rouge l'erreur
+      }
+    }
+  </script>
 </head>
 <body>
   <div class="quiz-container">
     <h1>Quiz</h1>
-    <form id="quizForm">
+    <form id="quizForm" onsubmit="event.preventDefault(); submitQuiz();">
       <div id="questions"></div>
       <button type="submit">Envoyer</button>
     </form>
-    <div id="result"></div>
+    <div id="result"></div>  <!-- Affichage du message de confirmation -->
   </div>
 
   <script>
     const questions = [
-      " Coucou mon coeur as-tu bien dormi ?",
-      " Comment est ce que tu te sens aujourd'hui ? y a t il des choses que tu aimerais me dire ?",
-      " Quel est ton humeur actuel sur une echelle de 1 a 10 ?",
-      " Y a t il quelque chose que je pourrai faire pour toi pour améliorer ta journée ?",
-      " Une fois que tu auras terminé le travail, que souhaiterais-tu que l'on fasse ?",
-      " Y a t il des choses que tu voudrais que l'on fasse aujourd'hui, ensemble ?",
-      " Y a t il un sujet spécifique dont tu aimerais parlé dont tu n'oserais pas ?",
-      " De quoi aurais-tu besoin là maintenant tout de suite pour que tu puisses bien demarrer ta journée ?",
-      " Si tu avais une question à me poser aujourd'hui, que souhaiterais-tu savoir ?",
-      " Ce n'est pas une question mon amour mais sache que je t'aime et n'oublie pas tu es toute ma vie"
+      "Coucou mon cœur as-tu bien dormi ?",
+      "Comment est-ce que tu te sens aujourd'hui ? Y a-t-il des choses que tu aimerais me dire ?",
+      "Quel est ton humeur actuel sur une échelle de 1 à 10 ?",
+      "Y a-t-il quelque chose que je pourrais faire pour toi pour améliorer ta journée ?",
+      "Une fois que tu auras terminé le travail, que souhaiterais-tu que l'on fasse ?",
+      "Y a-t-il des choses que tu voudrais que l'on fasse aujourd'hui, ensemble ?",
+      "Y a-t-il un sujet spécifique dont tu aimerais parler dont tu n'oserais pas ?",
+      "De quoi aurais-tu besoin là maintenant tout de suite pour que tu puisses bien démarrer ta journée ?",
+      "Si tu avais une question à me poser aujourd'hui, que souhaiterais-tu savoir ?",
+      "Ce n'est pas une question mon amour mais sache que je t'aime et n'oublie pas tu es toute ma vie"
     ];
 
     const questionsDiv = document.getElementById('questions');
 
+    // Dynamiser l'ajout des questions
     questions.forEach((q, i) => {
       questionsDiv.innerHTML += `
         <div class="question">
@@ -72,29 +124,6 @@
           <input type="text" name="q${i + 1}" required />
         </div>
       `;
-    });
-
-    document.getElementById('quizForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      const answers = {};
-      formData.forEach((value, key) => {
-        answers[key] = value;
-      });
-
-      const response = await fetch('http://localhost:3000/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers })
-      });
-
-      const resultDiv = document.getElementById('result');
-      if (response.ok) {
-        resultDiv.innerText = "Merci pour tes réponses !";
-        this.reset();
-      } else {
-        resultDiv.innerText = "Une erreur est survenue.";
-      }
     });
   </script>
 </body>
